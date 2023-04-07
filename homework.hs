@@ -1,5 +1,23 @@
 -- Task 1
-f x = x + 1
+secondAndFourthCond :: Int -> [(Int, Double)] -> Bool
+secondAndFourthCond _ [] = True
+secondAndFourthCond size (h:t) = 
+    if (fst h) < 0 || ((fst h) + 1) > size || (snd h) == 0.0  then
+        False
+    else
+        secondAndFourthCond size t
+
+thirdCond :: [(Int, Double)] -> Int -> Bool
+thirdCond [] _ = True
+thirdCond (h:t) prevKey = 
+    if (fst h) <= prevKey then
+        False
+    else 
+        thirdCond t (fst h)
+
+
+checkMap :: (Int, [(Int, Double)]) -> Bool
+checkMap (size, list) = (size > 0) && (secondAndFourthCond size list) && (thirdCond (tail list) (fst (head list)))
 -- Task 1
 
 -- Task 2
