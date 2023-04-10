@@ -63,3 +63,16 @@ elemAtMapHelper (_:t) index = elemAtMapHelper t (index - 1)
 elemAtMap :: (Int, [(Int, Double)]) -> Int -> Double
 elemAtMap (first, second) index = elemAtMapHelper second index
 -- Task 5 (?)
+
+-- Task 5 v0.2 (?) index == 0, 1, 2, ... || index == 4, 10, 11, 18, ...
+elemAtMapHelperV2 :: [(Int, Double)] -> Int -> Double
+elemAtMapHelperV2 [] _ = 0.0
+elemAtMapHelperV2 ((key, value):t) index = 
+    if key == index then
+        value
+    else 
+        elemAtMapHelperV2 t index
+
+elemAtMapV2 :: (Int, [(Int, Double)]) -> Int -> Double
+elemAtMapV2 (first, second) index = elemAtMapHelperV2 second index
+-- Task 5 v0.2 (?)
