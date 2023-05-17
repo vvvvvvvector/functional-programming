@@ -76,7 +76,7 @@ elemBST el (Node left x right)
 
 heightBST :: BST a -> Int
 heightBST Leaf = 0
-heightBST (Node left _ right) = 1 + max (heightBST left)  (heightBST right)
+heightBST (Node left _ right) = 1 + max (heightBST left) (heightBST right)
 
 -- Num, Ord, Eq, Show, Read
 
