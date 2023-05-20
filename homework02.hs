@@ -1,26 +1,20 @@
--- lab06 cos podobne
+-- map (\(x, y) -> (x + 1, y)) [(0,0), (1,0)]
 
--- rozmiar pola 21x11
+-- logToConsole $ showBoard $ Board (Position 0 0) R [(1,1)]
 
--- (0, 0) == (x, y) - 'stan planszy'
--- if '>' i f -> x++
--- if '<' i f -> x--
--- if '^' i f -> y--
--- if 'v' i f -> y++
+-- showBoard $ Board (Position 0 0) R [(1, 1)]
 
--- logToConsole $ showBoard $ Board (Position 0 0) R
+-- rows $ Board (Position 0 0) U [(1, 1)]
 
--- showBoard $ Board (Position 0 0) R
+-- showRow (Board (Position 0 0) U [(1, 1)]) 5
 
--- rows $ Board (Position 0 0) U
+-- showField (Board (Position 0 0) U [(1, 1)]) (Position 10 5)
 
--- showRow (Board (Position 5 (-2)) U) 5
+-- logToConsole $ showBoard (makeStep (Board (Position 0 0) R []))
 
--- showField (Board (Position 5 (-2)) U) (Position 10 5)
+-- logToConsole $ showBoard $ changeDirection (Board (Position 0 0) R []) 'n'
 
--- logToConsole $ showBoard (makeStep (Board (Position 0 0) R))
-
--- logToConsole (showBoard $ runCommand (Board (Position 0 0) R) "fffffnff")
+-- logToConsole (showBoard $ runCommand (Board (Position 0 0) R []) "mfff")
 
 logToConsole :: String -> IO ()
 logToConsole board = putStr board
@@ -36,7 +30,7 @@ returnSign direction
     | direction == U  = "^"
     | direction == D  = "v"
 
-data Board = Board Position Direction deriving Show
+data Board = Board Position Direction [(Int, Int)] deriving Show
 
 loopHelper start end x result =
     if start == end then
@@ -47,26 +41,37 @@ loopHelper start end x result =
 loop :: Int -> Int -> [[(Int, Int)]]
 loop x y = loopHelper (-5 + y) (6 + y) x []
 
-createRowHelper :: [(Int, Int)] -> Int -> Int -> Direction -> String -> String
-createRowHelper [] _ _ _ result = result ++ "\n"
-createRowHelper ((x, y):t) playerX playerY direction result = 
-    if playerX == x && playerY == y then
-        createRowHelper t playerX playerY direction (result ++ (returnSign direction))
+checkIsMarked :: [(Int, Int)] -> (Int, Int) -> Maybe (Int, Int)
+checkIsMarked [] _ = Nothing
+checkIsMarked ((x, y):t) (a, b) =
+    if x == a && y == b then
+        Just (a, b)
     else 
-        if x >= 0 && y >= 0 then 
-            createRowHelper t playerX playerY direction (result ++ "#")
+        checkIsMarked t (a, b)
+
+createRowHelper :: [(Int, Int)] -> Int -> Int -> Direction -> [(Int, Int)] -> String -> String
+createRowHelper [] _ _ _ _ result = result ++ "\n"
+createRowHelper ((x, y):t) playerX playerY direction markedCells result = 
+    if playerX == x && playerY == y then
+        createRowHelper t playerX playerY direction markedCells (result ++ (returnSign direction))
+    else 
+        if (checkIsMarked markedCells (x, y)) /= Nothing then
+                createRowHelper t playerX playerY direction markedCells (result ++ ".")
         else
-            createRowHelper t playerX playerY direction (result ++ "~")
+            if x >= 0 && y >= 0 then 
+                createRowHelper t playerX playerY direction markedCells (result ++ "#")
+            else 
+                createRowHelper t playerX playerY direction markedCells (result ++ "~")
 
-createRow :: [(Int, Int)] -> Int -> Int -> Direction -> String
-createRow tuplesRow x y direction = createRowHelper tuplesRow x y direction ""
+createRow :: [(Int, Int)] -> Int -> Int -> Direction -> [(Int, Int)] -> String
+createRow tuplesRow x y direction markedCells = createRowHelper tuplesRow x y direction markedCells ""
 
-showBoardHelper :: [[(Int, Int)]] -> Int -> Int -> Direction -> String -> String
-showBoardHelper [] _ _ _ result = result
-showBoardHelper (h:t) x y direction result = showBoardHelper t x y direction (result ++ (createRow h x y direction))
+showBoardHelper :: [[(Int, Int)]] -> Int -> Int -> Direction -> [(Int, Int)] -> String -> String
+showBoardHelper [] _ _ _ _ result = result
+showBoardHelper (h:t) x y direction markedCells result = showBoardHelper t x y direction markedCells (result ++ (createRow h x y direction markedCells))
 
 showBoard :: Board -> String
-showBoard (Board (Position x y) direction) = showBoardHelper (loop x y) x y direction ""
+showBoard (Board (Position x y) direction markedCells) = showBoardHelper (loop x y) x y direction markedCells ""
 
 rows :: Board -> [String]
 rows board = lines $ showBoard board
@@ -77,19 +82,29 @@ showRow board index = (rows board) !! index
 showField :: Board -> Position -> Char
 showField board (Position x y) = (showRow board y) !! x
 
+-- shiftMarkedCells :: [(Int, Int)] -> ((Int, Int) -> (Int, Int)) -> [(Int, Int)]
+-- shiftMarkedCells markedCells func = map func markedCells
+
 makeStep :: Board -> Board
-makeStep (Board (Position x y) direction)
-    | direction == R = (Board (Position (x + 1) y) direction)
-    | direction == L = (Board (Position (x - 1) y) direction)
-    | direction == U = (Board (Position x (y - 1)) direction)
-    | direction == D = (Board (Position x (y + 1)) direction)
+makeStep (Board (Position x y) direction markedCells)
+    | direction == R = (Board (Position (x + 1) y) direction markedCells)
+    | direction == L = (Board (Position (x - 1) y) direction markedCells)
+    | direction == U = (Board (Position x (y - 1)) direction markedCells)
+    | direction == D = (Board (Position x (y + 1)) direction markedCells)
 
 changeDirection :: Board -> Char -> Board
-changeDirection (Board (Position x y) direction) newDirection
-    | newDirection == 'n' = (Board (Position x y) U)
-    | newDirection == 's' = (Board (Position x y) D)
-    | newDirection == 'w' = (Board (Position x y) L)
-    | newDirection == 'e' = (Board (Position x y) R)
+changeDirection (Board (Position x y) direction markedCells) newDirection
+    | newDirection == 'n' = (Board (Position x y) U markedCells)
+    | newDirection == 's' = (Board (Position x y) D markedCells)
+    | newDirection == 'w' = (Board (Position x y) L markedCells)
+    | newDirection == 'e' = (Board (Position x y) R markedCells)
+
+markCell :: Board -> Board
+markCell (Board (Position x y) direction markedCells) = 
+    if x >= 0 && y >= 0 then 
+        (Board (Position x y) direction (markedCells ++ [(x, y)]))
+    else 
+        (Board (Position x y) direction markedCells)
 
 runCommand :: Board -> String -> Board
 runCommand board [] = board
@@ -99,4 +114,5 @@ runCommand board (h:t)
     | h == 's'  = runCommand (changeDirection board h) t
     | h == 'w'  = runCommand (changeDirection board h) t
     | h == 'e'  = runCommand (changeDirection board h) t
+    | h == 'm'  = runCommand (markCell board) t
     | otherwise = runCommand board t
