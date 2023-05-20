@@ -120,19 +120,19 @@ runCommand board (h:t)
 boardGetPosition :: Board -> String
 boardGetPosition (Board (Position x y) direction markedCells) = "(" ++ show x ++ ", " ++ show y ++ ")\n"
 
-start :: IO ()
-start = gameLoop (Board (Position 0 0) R [])
-
 gameLoop :: Board -> IO ()
 gameLoop board = do
     logToConsole $ boardGetPosition board
     logToConsole $ showBoard board
 
     commands <- getLine
-    
+
     let newBoard = runCommand board commands
 
     if commands == "q" then 
-        logToConsole $ showBoard newBoard
+        logToConsole "the end of the game :>\n"
     else 
         gameLoop newBoard
+
+start :: IO ()
+start = gameLoop (Board (Position 0 0) R [])
