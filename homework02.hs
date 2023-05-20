@@ -116,3 +116,23 @@ runCommand board (h:t)
     | h == 'e'  = runCommand (changeDirection board h) t
     | h == 'm'  = runCommand (markCell board) t
     | otherwise = runCommand board t
+
+boardGetPosition :: Board -> String
+boardGetPosition (Board (Position x y) direction markedCells) = "(" ++ show x ++ ", " ++ show y ++ ")\n"
+
+start :: IO ()
+start = gameLoop (Board (Position 0 0) R [])
+
+gameLoop :: Board -> IO ()
+gameLoop board = do
+    logToConsole $ boardGetPosition board
+    logToConsole $ showBoard board
+
+    commands <- getLine
+    
+    let newBoard = runCommand board commands
+
+    if commands == "q" then 
+        logToConsole $ showBoard newBoard
+    else 
+        gameLoop newBoard
